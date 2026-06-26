@@ -1,0 +1,19 @@
+name: example_rename_field
+description: "Upstream renames User.user_name -> username; downstream client.py still reads .user_name."
+source: openapi
+repo: example  # logical repo name; must match `index_repo.py --repo example`
+
+# What `parse` should extract from the before/after specs (sanity-checks your parser).
+expected_changes:
+  - kind: field_renamed
+    location: components.schemas.User.user_name
+    after: username
+
+# Files `search` SHOULD surface — scores context_recall.
+gold_sites:
+  - code/client.py
+
+# Files the gold patch touches — scores patch_minimality. (models.py is "generated", so the
+# minimal hand fix is client.py only; test_user.py was already written against the new field.)
+gold_files:
+  - code/client.py

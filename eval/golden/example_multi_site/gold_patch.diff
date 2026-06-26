@@ -1,0 +1,16 @@
+--- a/code/pricing.py
++++ b/code/pricing.py
+@@ -2,4 +2,4 @@
+ 
+ 
+ def line_total(product: Product, quantity: int) -> float:
+-    return product.price * quantity
++    return product.unit_price * quantity
+--- a/code/cart.py
++++ b/code/cart.py
+@@ -2,4 +2,4 @@
+ 
+ 
+ def price_label(product: Product) -> str:
+-    return f"${product.price:.2f}"
++    return f"${product.unit_price:.2f}"

@@ -1,0 +1,8 @@
+--- a/code/producer.py
++++ b/code/producer.py
+@@ -2,4 +2,4 @@
+ 
+ 
+ def make_event(name: str) -> Event:
+-    return Event(id=1, name=name, deprecated_tag="legacy")
++    return Event(id=1, name=name)

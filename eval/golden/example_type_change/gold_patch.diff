@@ -1,0 +1,8 @@
+--- a/code/invoice.py
++++ b/code/invoice.py
+@@ -2,4 +2,4 @@
+ 
+ 
+ def receipt(order: Order) -> str:
+-    return "Total: " + order.total
++    return "Total: " + str(order.total)

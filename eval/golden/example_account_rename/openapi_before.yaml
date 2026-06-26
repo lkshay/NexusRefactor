@@ -1,0 +1,31 @@
+openapi: 3.0.3
+info:
+  title: Accounts API
+  version: 1.0.0
+paths:
+  /accounts/{id}:
+    get:
+      operationId: getAccount
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        id:
+          type: integer
+        balance_cents:
+          type: integer
+      required: [id, balance_cents]

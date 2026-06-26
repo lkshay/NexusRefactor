@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual env / tooling caches
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Secrets / local config
+.env
+
+# Qdrant local storage (docker volume mount)
+qdrant_storage/
+
+# Eval outputs (regenerated; don't commit run artifacts)
+eval/results/
+
+# OS
+.DS_Store

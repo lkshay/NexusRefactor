@@ -1,0 +1,17 @@
+name: example_type_change
+description: "Order.total changed string -> number; invoice.py still concatenates it as a string."
+source: openapi
+repo: type_change
+
+# A non-rename: the fix requires adaptation (str(...)), not a find/replace of a name.
+expected_changes:
+  - kind: field_type_changed
+    location: components.schemas.Order.total
+    before: string
+    after: number
+
+gold_sites:
+  - code/invoice.py
+
+gold_files:
+  - code/invoice.py

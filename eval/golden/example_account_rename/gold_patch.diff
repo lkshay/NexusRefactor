@@ -1,0 +1,8 @@
+--- a/code/wallet.py
++++ b/code/wallet.py
+@@ -2,4 +2,4 @@
+ 
+ 
+ def to_dollars(account: Account) -> float:
+-    return account.balance_cents / 100
++    return account.balance_minor / 100

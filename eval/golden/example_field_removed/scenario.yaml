@@ -1,0 +1,15 @@
+name: example_field_removed
+description: "Event.deprecated_tag removed upstream; producer.py still passes it to the constructor."
+source: openapi
+repo: field_removed
+
+expected_changes:
+  - kind: field_removed
+    location: components.schemas.Event.deprecated_tag
+    before: deprecated_tag
+
+gold_sites:
+  - code/producer.py
+
+gold_files:
+  - code/producer.py

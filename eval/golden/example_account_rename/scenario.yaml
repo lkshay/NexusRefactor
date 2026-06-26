@@ -1,0 +1,15 @@
+name: example_account_rename
+description: "Account.balance_cents renamed to balance_minor; wallet.py still reads .balance_cents."
+source: openapi
+repo: account
+
+expected_changes:
+  - kind: field_renamed
+    location: components.schemas.Account.balance_cents
+    after: balance_minor
+
+gold_sites:
+  - code/wallet.py
+
+gold_files:
+  - code/wallet.py

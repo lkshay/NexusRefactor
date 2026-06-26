@@ -1,0 +1,31 @@
+openapi: 3.0.3
+info:
+  title: Store API
+  version: 1.0.0
+paths:
+  /products/{id}:
+    get:
+      operationId: getProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        price:
+          type: number
+      required: [id, price]
