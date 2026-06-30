@@ -21,5 +21,8 @@ qdrant_storage/
 # Eval outputs (regenerated; don't commit run artifacts)
 eval/results/
 
+# Online-eval store (local run metrics; regenerated)
+nexus_metrics.db
+
 # OS
 .DS_Store

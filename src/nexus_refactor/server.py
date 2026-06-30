@@ -24,6 +24,7 @@ from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Request
 
+from nexus_refactor.metrics_store import summarize
 from nexus_refactor.resolve import resolve_drift
 
 app = FastAPI(title="NexusRefactor webhook")
@@ -36,6 +37,12 @@ _CODE_DIR = os.environ.get("NEXUS_CODE_DIR", "service")
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
+
+
+@app.get("/metrics")
+def metrics() -> dict:
+    """Online-eval summary over all recorded runs (heal rate, latency, cost, PRs)."""
+    return summarize()
 
 
 @app.post("/webhook")

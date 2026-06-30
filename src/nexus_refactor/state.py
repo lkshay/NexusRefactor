@@ -44,6 +44,8 @@ class RefactorState(TypedDict, total=False):
     # --- refactor node output ---
     current_patch: str  # unified diff under construction
     iteration: int  # incremented each refactor pass; drives the termination gate
+    input_tokens: Annotated[int, operator.add]  # summed across heal iterations (for the metrics store)
+    output_tokens: Annotated[int, operator.add]
 
     # --- verify node output (the objective signal) ---
     compiler_log: str  # mypy output — the "compile" signal in Python

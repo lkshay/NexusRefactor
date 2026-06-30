@@ -59,14 +59,16 @@ def refactor_node(state: RefactorState) -> dict:
     prompt = _build_prompt(
         state.get("schema_diff"), files, state.get("compiler_log"), state.get("test_log")
     )
-    completion = choose_provider("refactor").complete(_SYSTEM, prompt, max_tokens=2048).text
-    edits = _parse_blocks(completion)
+    result = choose_provider("refactor").complete(_SYSTEM, prompt, max_tokens=2048)
+    edits = _parse_blocks(result.text)
     applied = _apply_edits(edits, repo)
     patch = _compute_patch(state, repo, files.keys())
 
     return {
         "current_patch": patch,
         "iteration": iteration,
+        "input_tokens": result.input_tokens,
+        "output_tokens": result.output_tokens,
         "history": [
             f"refactor: iteration {iteration}, parsed {len(edits)} edit(s), applied {applied}"
         ],

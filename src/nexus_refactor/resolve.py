@@ -11,6 +11,7 @@ before-spec = the spec at `base` (default HEAD~1); after-spec = the current work
 from __future__ import annotations
 
 import subprocess
+import time
 from pathlib import Path
 
 import yaml
@@ -18,6 +19,7 @@ from qdrant_client.models import FieldCondition, Filter, MatchValue
 
 from nexus_refactor.config import get_settings
 from nexus_refactor.graph import build_graph
+from nexus_refactor.metrics_store import provider_and_model, record_run
 from nexus_refactor.retrieval.indexer import chunk_repo
 from nexus_refactor.retrieval.qdrant_store import (
     COLLECTION,
@@ -31,7 +33,9 @@ from nexus_refactor.schema.openapi_diff import diff_openapi
 def _run(cmd: list[str], cwd: Path) -> str:
     proc = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True)
     if proc.returncode != 0:
-        raise RuntimeError(f"`{' '.join(cmd)}` failed: {proc.stderr.strip() or proc.stdout.strip()}")
+        raise RuntimeError(
+            f"`{' '.join(cmd)}` failed: {proc.stderr.strip() or proc.stdout.strip()}"
+        )
     return proc.stdout.strip()
 
 
@@ -57,13 +61,16 @@ def resolve_drift(
     ensure_collection(client)
     client.delete(
         COLLECTION,
-        points_selector=Filter(must=[FieldCondition(key="repo", match=MatchValue(value=repo_name))]),
+        points_selector=Filter(
+            must=[FieldCondition(key="repo", match=MatchValue(value=repo_name))]
+        ),
     )
     index_chunks(client, chunk_repo(code_path, repo_name))
 
     # work on a fresh fix branch off the current HEAD (the drift)
     _run(["git", "checkout", "-B", branch], repo_path)
 
+    start = time.perf_counter()
     final = build_graph().invoke(
         {
             "scenario_dir": str(repo_path),
@@ -76,11 +83,17 @@ def resolve_drift(
             "history": [],
         }
     )
+    latency_ms = int((time.perf_counter() - start) * 1000)
 
-    result: dict = {"healed": bool(final.get("build_clean")), "history": final.get("history", []),
-                    "diff": "", "pr_url": None}
+    result: dict = {
+        "healed": bool(final.get("build_clean")),
+        "history": final.get("history", []),
+        "diff": "",
+        "pr_url": None,
+    }
     if not result["healed"]:
         _run(["git", "checkout", "--", "."], repo_path)  # discard partial edits, keep branch
+        _record(repo_name, final, latency_ms, result)
         return result
 
     result["diff"] = _run(["git", "diff"], repo_path)
@@ -90,16 +103,45 @@ def resolve_drift(
     if open_pr:
         _run(["git", "push", "-u", "origin", branch], repo_path)
         result["pr_url"] = _run(
-            ["gh", "pr", "create", "--title", "Resolve schema drift in downstream code",
-             "--body", _pr_body(before, after, result["diff"])],
+            [
+                "gh",
+                "pr",
+                "create",
+                "--title",
+                "Resolve schema drift in downstream code",
+                "--body",
+                _pr_body(before, after, result["diff"]),
+            ],
             repo_path,
         )
+    _record(repo_name, final, latency_ms, result)
     return result
+
+
+def _record(target: str, final: dict, latency_ms: int, result: dict) -> None:
+    """Persist this run to the online-eval store (real production runs; no gold → recall=None)."""
+    provider, model = provider_and_model()
+    record_run(
+        {
+            "target": target,
+            "provider": provider,
+            "model": model,
+            "healed": int(result["healed"]),
+            "iterations": final.get("iteration", 0),
+            "latency_ms": latency_ms,
+            "input_tokens": final.get("input_tokens", 0),
+            "output_tokens": final.get("output_tokens", 0),
+            "context_recall": None,
+            "pr_url": result["pr_url"],
+        }
+    )
 
 
 def _pr_body(before: dict, after: dict, diff: str) -> str:
     delta = diff_openapi(before, after)
-    changes = "\n".join(f"- `{c.kind.value}` at `{c.location}`" for c in delta.changes) or "- (none)"
+    changes = (
+        "\n".join(f"- `{c.kind.value}` at `{c.location}`" for c in delta.changes) or "- (none)"
+    )
     return (
         "## Schema drift resolved automatically\n\n"
         "An upstream OpenAPI change left downstream code stale. NexusRefactor located the impacted "
