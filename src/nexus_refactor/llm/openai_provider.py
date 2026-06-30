@@ -1,18 +1,18 @@
 """OpenAI implementation of LLMProvider.
 
->>> STUB — IMPLEMENT when you build the refactor node. <<<
-SDK: `openai` (already installed). Client: `openai.OpenAI(api_key=...)`.
+Uses the `openai` SDK against the default OpenAI endpoint. Needs OPENAI_API_KEY.
 
-  - complete(): client.chat.completions.create(model, messages=[{system},{user}],
-                  max_tokens=...); read choice.message.content and resp.usage.
-  - complete_json(): use Structured Outputs — response_format={"type":"json_schema",
-                  "json_schema":{"name":..., "schema": schema, "strict": True}} — and parse
-                  the returned JSON. Keeps you symmetric with the Anthropic provider.
+(Near-identical to deepseek_provider / ollama_provider — all OpenAI-compatible. Once you have a
+moment, factoring a shared `_OpenAICompatProvider` base is the obvious cleanup; kept separate here
+so each reads on its own.)
 """
 
 from __future__ import annotations
 
+import json
 from typing import Any
+
+from openai import OpenAI
 
 from nexus_refactor.config import get_settings
 from nexus_refactor.llm.base import LLMResult
@@ -24,12 +24,43 @@ class OpenAIProvider:
     def __init__(self, model: str | None = None) -> None:
         s = get_settings()
         self.model = model or s.openai_model
-        # TODO(you): self._client = openai.OpenAI(api_key=s.openai_api_key)
+        # Built here (not at import) so importing this module never needs a key.
+        self._client = OpenAI(api_key=s.openai_api_key or None)
 
     def complete(self, system: str, user: str, *, max_tokens: int = 4096) -> LLMResult:
-        raise NotImplementedError("Implement OpenAIProvider.complete")
+        resp = self._client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            max_tokens=max_tokens,
+        )
+        usage = resp.usage
+        return LLMResult(
+            text=resp.choices[0].message.content or "",
+            input_tokens=usage.prompt_tokens if usage else 0,
+            output_tokens=usage.completion_tokens if usage else 0,
+            model=resp.model,
+        )
 
     def complete_json(
         self, system: str, user: str, schema: dict[str, Any], *, max_tokens: int = 4096
     ) -> dict[str, Any]:
-        raise NotImplementedError("Implement OpenAIProvider.complete_json (structured outputs)")
+        # OpenAI also supports strict `json_schema` structured outputs; JSON mode + the schema in
+        # the prompt is the portable choice that matches the other providers.
+        system_with_schema = (
+            f"{system}\n\nReturn a single JSON object matching this JSON Schema:\n"
+            f"{json.dumps(schema)}"
+        )
+        resp = self._client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": system_with_schema},
+                {"role": "user", "content": user},
+            ],
+            max_tokens=max_tokens,
+            response_format={"type": "json_object"},
+        )
+        data: Any = json.loads(resp.choices[0].message.content or "{}")
+        return data if isinstance(data, dict) else {}

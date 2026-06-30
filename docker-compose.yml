@@ -9,3 +9,20 @@ services:
     volumes:
       - ./qdrant_storage:/qdrant/storage
     restart: unless-stopped
+
+  # The agent service. `docker compose up -d --build` runs this + qdrant together; `make up` still
+  # starts only qdrant (for host-side dev). Env comes from your shell / .env.
+  nexus:
+    build: .
+    depends_on:
+      - qdrant
+    ports:
+      - "8000:8000"
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      LLM_PROVIDER: ${LLM_PROVIDER:-deepseek}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      NEXUS_WEBHOOK_SECRET: ${NEXUS_WEBHOOK_SECRET:-}
+      GH_TOKEN: ${GH_TOKEN:-}
+    restart: unless-stopped
