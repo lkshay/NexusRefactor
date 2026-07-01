@@ -1,0 +1,41 @@
+# fly.toml — NexusRefactor webhook service on Fly.io
+#
+# Deploy:  fly launch --no-deploy   (registers the app; keep this file)
+#          fly secrets set DEEPSEEK_API_KEY=... NEXUS_WEBHOOK_SECRET=... GH_TOKEN=... \
+#                          QDRANT_URL=... QDRANT_API_KEY=...
+#          fly deploy
+#
+# Fly builds the image on a REMOTE amd64 builder, so your arm64 Mac is a non-issue.
+
+app = "nexusrefactor"
+primary_region = "iad"            # change to a region near you (`fly platform regions`)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  LLM_PROVIDER = "deepseek"
+  NEXUS_SPEC = "openapi.yaml"
+  NEXUS_CODE_DIR = "service"
+  # QDRANT_URL / QDRANT_API_KEY come from secrets (Qdrant Cloud or a second Fly app).
+
+# Secrets (set via `fly secrets set KEY=...`, NEVER in this file):
+#   DEEPSEEK_API_KEY · NEXUS_WEBHOOK_SECRET · GH_TOKEN · QDRANT_URL · QDRANT_API_KEY
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0        # scale-to-zero for cheap experimentation (cold start per webhook)
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "2gb"                   # fastembed + oasdiff + agent; 1gb is tight — start at 2gb

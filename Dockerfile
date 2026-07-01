@@ -26,7 +26,8 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 RUN uv pip install .
 
-ENV QDRANT_URL=http://qdrant:6333
+# QDRANT_URL comes from the runtime env — compose sets `qdrant:6333`, Fly sets the cloud URL as a
+# secret. Left unset here so it isn't baked to a compose-only hostname (config default: localhost).
 EXPOSE 8000
 # Embedding models (fastembed) download on first job, not at build time.
 CMD ["uvicorn", "nexus_refactor.server:app", "--host", "0.0.0.0", "--port", "8000"]
