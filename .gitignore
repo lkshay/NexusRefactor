@@ -14,6 +14,7 @@ dist/
 
 # Secrets / local config
 .env
+.fly-secrets.env
 
 # Qdrant local storage (docker volume mount)
 qdrant_storage/
