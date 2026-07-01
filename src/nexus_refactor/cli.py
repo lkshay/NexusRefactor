@@ -13,11 +13,12 @@ from pathlib import Path
 
 import typer
 import yaml
+from langchain_core.tracers.context import collect_runs
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from nexus_refactor.config import get_settings, setup_tracing
+from nexus_refactor.config import get_settings, setup_tracing, trace_url
 from nexus_refactor.graph import build_graph
 from nexus_refactor.metrics_store import provider_and_model, record_run, summarize
 from nexus_refactor.resolve import resolve_drift
@@ -70,10 +71,12 @@ def run(scenario: str = typer.Argument(..., help="Path to a scenario dir (see ev
     }
 
     start = time.perf_counter()
-    try:
-        final = build_graph().invoke(initial)
-    finally:
-        shutil.rmtree(work_dir, ignore_errors=True)
+    # collect_runs captures the LangGraph run tree so we can surface its LangSmith trace URL below.
+    with collect_runs() as traced:
+        try:
+            final = build_graph().invoke(initial)
+        finally:
+            shutil.rmtree(work_dir, ignore_errors=True)
     latency_ms = int((time.perf_counter() - start) * 1000)
 
     table = Table(title="Run trace", show_header=True, header_style="bold")
@@ -111,6 +114,10 @@ def run(scenario: str = typer.Argument(..., help="Path to a scenario dir (see ev
         }
     )
     console.print(f"[dim]recorded: {latency_ms} ms, recall={recall} → see `nexus metrics`[/dim]")
+
+    url = trace_url(traced)
+    if url:
+        console.print(f"[blue]🔍 LangSmith trace:[/blue] {url}")
 
 
 @app.command()

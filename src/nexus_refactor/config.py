@@ -62,3 +62,24 @@ def setup_tracing(settings: Settings) -> None:
     if settings.langsmith_api_key:
         os.environ["LANGSMITH_API_KEY"] = settings.langsmith_api_key
     os.environ["LANGSMITH_PROJECT"] = settings.langsmith_project
+
+
+def trace_url(collected: object) -> str | None:
+    """LangSmith UI URL for the root run captured by `collect_runs()` around a graph invoke.
+
+    `collected` is the handler yielded by langchain_core's `collect_runs()`. Returns None when
+    tracing is off or the URL can't be resolved, so callers can print it without guarding.
+    """
+    settings = get_settings()
+    if not (settings.langsmith_tracing and settings.langsmith_api_key):
+        return None
+    try:
+        from langsmith import Client
+
+        runs = list(getattr(collected, "traced_runs", []) or [])
+        if not runs:
+            return None
+        root = next((r for r in runs if getattr(r, "parent_run_id", None) is None), runs[0])
+        return Client().get_run_url(run=root)
+    except Exception:
+        return None
