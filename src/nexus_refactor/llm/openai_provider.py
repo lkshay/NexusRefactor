@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from langsmith.wrappers import wrap_openai
 from openai import OpenAI
 
 from nexus_refactor.config import get_settings
@@ -25,7 +26,8 @@ class OpenAIProvider:
         s = get_settings()
         self.model = model or s.openai_model
         # Built here (not at import) so importing this module never needs a key.
-        self._client = OpenAI(api_key=s.openai_api_key or None)
+        # wrap_openai → LLM calls become LangSmith spans when tracing is on (no-op otherwise).
+        self._client = wrap_openai(OpenAI(api_key=s.openai_api_key or None))
 
     def complete(self, system: str, user: str, *, max_tokens: int = 4096) -> LLMResult:
         resp = self._client.chat.completions.create(

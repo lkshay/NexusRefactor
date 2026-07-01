@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from langsmith.wrappers import wrap_openai
 from openai import OpenAI
 
 from nexus_refactor.config import get_settings
@@ -27,7 +28,8 @@ class OllamaProvider:
     def __init__(self, model: str | None = None) -> None:
         s = get_settings()
         self.model = model or s.ollama_model
-        self._client = OpenAI(api_key="ollama", base_url=s.ollama_base_url)  # key ignored locally
+        # wrap_openai → LLM calls become LangSmith spans when tracing is on (no-op otherwise).
+        self._client = wrap_openai(OpenAI(api_key="ollama", base_url=s.ollama_base_url))
 
     def complete(self, system: str, user: str, *, max_tokens: int = 4096) -> LLMResult:
         resp = self._client.chat.completions.create(

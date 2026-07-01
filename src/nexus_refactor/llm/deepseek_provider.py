@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from langsmith.wrappers import wrap_openai
 from openai import OpenAI
 
 from nexus_refactor.config import get_settings
@@ -28,9 +29,13 @@ class DeepSeekProvider:
         s = get_settings()
         self.model = model or s.deepseek_model
         # Client built here (not at import time) so importing this module never needs a key.
-        self._client = OpenAI(
-            api_key=s.deepseek_api_key or None,
-            base_url="https://api.deepseek.com",
+        # wrap_openai makes each LLM call a rich LangSmith span (prompt, completion, tokens) when
+        # tracing is on; a transparent no-op otherwise.
+        self._client = wrap_openai(
+            OpenAI(
+                api_key=s.deepseek_api_key or None,
+                base_url="https://api.deepseek.com",
+            )
         )
 
     def complete(self, system: str, user: str, *, max_tokens: int = 4096) -> LLMResult:
