@@ -20,7 +20,7 @@ indexes the code into Qdrant, cuts a branch, and **invokes the graph**. Inside t
 - A **gate** loops back to `refactor` with the failure logs until it's green or the iteration
   budget runs out.
 
-On green, `resolve_drift` commits, opens a PR via `gh`, and **`record_run`** writes one metrics row.
+On green, `resolve_drift` commits, opens a PR via `gh`, and **`record_run`** writes one metrics row. Throughout, the agent also streams a per-run **trace to LangSmith** (node spans + each LLM call's prompt/completion) — the observability layer that complements the metrics store.
 
 ### The data shape at each hop
 
