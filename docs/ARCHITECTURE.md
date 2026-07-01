@@ -1,5 +1,8 @@
 # Architecture
 
+> Visual companion: **[FLOWS.md](FLOWS.md)** — the end-to-end data & service flow (trigger → verified
+> PR) and the hybrid-retrieval + RRF internals as diagrams, with the interview "why" behind each choice.
+
 ## The graph (Phase 1a)
 
 A **cyclic, stateful graph** — never call it a "cyclic DAG"; that's a contradiction, and
