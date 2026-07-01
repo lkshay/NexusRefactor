@@ -53,7 +53,21 @@ loop iteration instead of overwriting.
 RRF merges the **lexical** bm25 hit (exact field-name match) and the **semantic** dense hit by
 **rank**, so there's no need to normalize a cosine score against a bm25 score.
 
-## 3. The design decisions interviewers probe
+## 3. Target deployment (the pitch)
+
+![Target architecture](flows-3-target-architecture.svg)
+
+An org installs the GitHub App on its repos. A spec change → GitHub delivers a webhook + an App
+installation token → the agent service on **Fly.io** heals the downstream code (gated by mypy +
+pytest) → a **verified PR** goes back for a human to review and merge. Observability is two layers:
+**LangSmith** for per-run traces (*why* did this run do that?) and a separate **online-eval
+dashboard** for the KPIs — heal rate, $/PR, and **PR-acceptance** (polled back from GitHub).
+
+Backing services: cloud **Qdrant** (retrieval) and **DeepSeek** (LLM). The agent, container, and
+eval harness exist today; the Fly host, App identity, cloud Qdrant, and LangSmith wiring are the
+deploy steps that make this picture real.
+
+## 4. The design decisions interviewers probe
 
 - **Why a cyclic graph, not a linear pipeline?** The fix is iterative — patch, check, re-patch
   against the failure. The self-heal loop *is* the product.

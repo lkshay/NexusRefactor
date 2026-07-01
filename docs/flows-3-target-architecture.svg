@@ -1,0 +1,82 @@
+<svg viewBox="0 0 960 470" width="960" height="470" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>target architecture: the whole system to explain</title>
+<desc>A customer organization installs the GitHub App on its repos (payments-api, orders-svc, users-svc). When an OpenAPI spec changes, GitHub delivers a webhook and an App installation token to the agent service running on Fly.io — a FastAPI plus LangGraph heal loop, parse search refactor verify, gated by mypy and pytest. The agent uses a cloud Qdrant for retrieval and DeepSeek as the LLM, then opens a verified pull request back to the org repo for a human to review and merge. Observability has two layers: LangSmith captures per-run traces for debugging, and a separate online-eval dashboard tracks heal rate, cost per PR, and PR acceptance — the latter polled back from GitHub.</desc>
+<style>
+ text { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+ .serif { font-family: Georgia, 'Times New Roman', serif; }
+ .mono { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+</style>
+<defs>
+ <marker id="a" markerWidth="8" markerHeight="8" refX="6.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#b3b1a8"/></marker>
+ <marker id="ok" markerWidth="8" markerHeight="8" refX="6.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#3a7d54"/></marker>
+</defs>
+
+<text x="28" y="34" class="serif" font-size="20" font-weight="500" fill="#262624">the system to explain</text>
+<text x="28" y="55" font-size="12.5" fill="#6b6a66">an org's spec change → your Fly-hosted agent → a verified PR, observed two ways</text>
+<rect x="636" y="23" width="12" height="12" rx="3" fill="#eef2fb" stroke="#b9c9e8"/>
+<text x="654" y="33" font-size="11" fill="#6b6a66">your Fly deploy</text>
+<line x1="748" y1="29" x2="762" y2="29" stroke="#3a7d54" stroke-width="2"/>
+<text x="768" y="33" font-size="11" fill="#6b6a66">verified PR</text>
+
+<polyline points="480,138 480,74 150,74 150,84" fill="none" stroke="#3a7d54" stroke-width="1.5" marker-end="url(#ok)"/>
+<text x="300" y="68" class="mono" font-size="10" fill="#3a7d54">④ verified PR → human reviews &amp; merges</text>
+
+<rect x="24" y="84" width="220" height="214" rx="10" fill="none" stroke="#b3b1a8" stroke-dasharray="5 4"/>
+<text x="38" y="105" font-size="12" font-weight="500" fill="#262624">customer org</text>
+<rect x="40" y="116" width="188" height="36" rx="6" fill="#f5f4f0" stroke="#e6e4de"/>
+<text x="134" y="139" text-anchor="middle" font-size="11.5" font-weight="500" fill="#262624">payments-api</text>
+<rect x="40" y="158" width="188" height="36" rx="6" fill="#f5f4f0" stroke="#e6e4de"/>
+<text x="134" y="181" text-anchor="middle" font-size="11.5" font-weight="500" fill="#262624">orders-svc</text>
+<rect x="40" y="200" width="188" height="36" rx="6" fill="#f5f4f0" stroke="#e6e4de"/>
+<text x="134" y="223" text-anchor="middle" font-size="11.5" font-weight="500" fill="#262624">users-svc</text>
+<text x="40" y="260" font-size="9.5" fill="#9a9994">GitHub App installed · they own the specs</text>
+<text x="40" y="276" font-size="9.5" fill="#9a9994">human reviews &amp; merges the PRs</text>
+
+<rect x="276" y="150" width="116" height="94" rx="8" fill="#f5f4f0" stroke="#e6e4de"/>
+<text x="334" y="178" text-anchor="middle" font-size="13" font-weight="500" fill="#262624">GitHub</text>
+<text x="334" y="195" text-anchor="middle" font-size="9.5" fill="#6b6a66">webhook delivery</text>
+<text x="334" y="208" text-anchor="middle" font-size="9.5" fill="#6b6a66">+ App identity</text>
+
+<rect x="424" y="102" width="258" height="196" rx="12" fill="none" stroke="#b9c9e8" stroke-width="2"/>
+<text x="438" y="123" font-size="12.5" font-weight="500" fill="#3f6cc4">Fly.io — your deployment</text>
+<rect x="442" y="138" width="222" height="144" rx="8" fill="#eef2fb" stroke="#b9c9e8"/>
+<text x="553" y="164" text-anchor="middle" font-size="14" font-weight="500" fill="#262624">agent service</text>
+<text x="553" y="182" text-anchor="middle" font-size="10" fill="#6b6a66">FastAPI + LangGraph</text>
+<line x1="462" y1="192" x2="644" y2="192" stroke="#b9c9e8"/>
+<text x="553" y="210" text-anchor="middle" class="mono" font-size="9.5" fill="#6b6a66">parse→search→refactor→verify</text>
+<text x="553" y="228" text-anchor="middle" font-size="9.5" fill="#6b6a66">gated by mypy + pytest</text>
+<text x="553" y="254" text-anchor="middle" font-size="10" font-weight="500" fill="#3f6cc4">always-on · index stays warm</text>
+
+<rect x="704" y="118" width="232" height="58" rx="8" fill="#f5f4f0" stroke="#e6e4de"/>
+<text x="820" y="141" text-anchor="middle" font-size="13" font-weight="500" fill="#262624">Qdrant</text>
+<text x="820" y="158" text-anchor="middle" font-size="9.5" fill="#6b6a66">retrieval · code_chunks (cloud)</text>
+<rect x="704" y="190" width="232" height="58" rx="8" fill="#f5f4f0" stroke="#e6e4de"/>
+<text x="820" y="213" text-anchor="middle" font-size="13" font-weight="500" fill="#262624">DeepSeek</text>
+<text x="820" y="230" text-anchor="middle" font-size="9.5" fill="#6b6a66">LLM · cloud API</text>
+
+<line x1="246" y1="190" x2="273" y2="190" stroke="#b3b1a8" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="242" y="180" class="mono" font-size="8.5" fill="#9a9994">① spec Δ</text>
+<line x1="392" y1="186" x2="439" y2="192" stroke="#b3b1a8" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="398" y="176" class="mono" font-size="8.5" fill="#9a9994">② webhook + App token</text>
+<line x1="664" y1="170" x2="702" y2="150" stroke="#b3b1a8" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="662" y="166" class="mono" font-size="8.5" fill="#9a9994">③ retrieval</text>
+<line x1="664" y1="212" x2="702" y2="218" stroke="#b3b1a8" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="668" y="234" class="mono" font-size="8.5" fill="#9a9994">③ LLM</text>
+
+<text x="28" y="338" font-size="12" font-weight="500" fill="#9a9994">observability — two complementary layers</text>
+<rect x="300" y="356" width="268" height="92" rx="8" fill="#f5f4f0" stroke="#e6e4de"/>
+<text x="434" y="382" text-anchor="middle" font-size="13" font-weight="500" fill="#262624">LangSmith</text>
+<text x="434" y="400" text-anchor="middle" font-size="9.5" fill="#6b6a66">per-run traces · prompts · tokens · latency</text>
+<text x="434" y="420" text-anchor="middle" font-size="9.5" fill="#3f6cc4">→ why did this run do that?</text>
+<rect x="600" y="356" width="336" height="92" rx="8" fill="#f5f4f0" stroke="#e6e4de"/>
+<text x="768" y="382" text-anchor="middle" font-size="13" font-weight="500" fill="#262624">online-eval dashboard</text>
+<text x="768" y="400" text-anchor="middle" font-size="9.5" fill="#6b6a66">heal rate · $/PR · PR-acceptance</text>
+<text x="768" y="420" text-anchor="middle" font-size="9.5" fill="#3f6cc4">→ is the fleet actually good?</text>
+
+<line x1="520" y1="282" x2="446" y2="354" stroke="#b3b1a8" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="452" y="322" class="mono" font-size="8.5" fill="#9a9994">traces</text>
+<line x1="586" y1="282" x2="742" y2="354" stroke="#b3b1a8" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="648" y="322" class="mono" font-size="8.5" fill="#9a9994">metrics</text>
+<line x1="360" y1="244" x2="648" y2="356" stroke="#b3b1a8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#a)"/>
+<text x="452" y="300" class="mono" font-size="8.5" fill="#9a9994">PR merged? → KPI (polled)</text>
+</svg>
