@@ -25,6 +25,7 @@ from pathlib import Path
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Request
 
 from nexus_refactor.config import get_settings, setup_tracing
+from nexus_refactor.github_app import installation_token
 from nexus_refactor.metrics_store import summarize
 from nexus_refactor.resolve import resolve_drift
 
@@ -74,7 +75,8 @@ async def webhook(
         return {"ignored": f"{_SPEC} unchanged in this push"}
 
     repo = payload["repository"]["full_name"]
-    background.add_task(_run_job, repo)  # respond now; the agent runs after (becomes a queue in prod)
+    installation_id = payload.get("installation", {}).get("id")
+    background.add_task(_run_job, repo, installation_id)  # respond now; the agent runs after
     return {"accepted": repo, "spec": _SPEC}
 
 
@@ -86,15 +88,29 @@ def _verify(body: bytes, signature: str) -> None:
         raise HTTPException(status_code=401, detail="invalid signature")
 
 
-def _run_job(repo: str) -> None:
-    """Clone the repo and run the agent. Runs in the background; a real deploy uses a queue+worker."""
+def _run_job(repo: str, installation_id: int | None = None) -> None:
+    """Clone the repo and run the agent as the App. Runs in the background (a real deploy uses a
+    queue+worker). With an installation_id (App-delivered webhook) we mint a scoped token and act as
+    nexusrefactor[bot]; without one we fall back to the ambient gh credentials."""
     work = Path(tempfile.mkdtemp(prefix="nexus-job-"))
     try:
-        subprocess.run(
-            ["gh", "repo", "clone", repo, str(work / "repo")],
-            check=True, capture_output=True, text=True,
-        )
-        result = resolve_drift(str(work / "repo"), spec=_SPEC, code_dir=_CODE_DIR)
+        token = installation_token(installation_id) if installation_id else None
+        if token:  # act as the bot — token embedded in origin, so the later push uses it too
+            clone = [
+                "git",
+                "clone",
+                f"https://x-access-token:{token}@github.com/{repo}.git",
+                str(work / "repo"),
+            ]
+        else:  # fallback: ambient gh credentials (handles private repos)
+            clone = ["gh", "repo", "clone", repo, str(work / "repo")]
+        try:
+            subprocess.run(clone, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(
+                f"clone failed (exit {e.returncode})"
+            ) from None  # sanitized: no token in logs
+        result = resolve_drift(str(work / "repo"), spec=_SPEC, code_dir=_CODE_DIR, token=token)
         print(f"[nexus] {repo}: healed={result['healed']} pr={result['pr_url']}", flush=True)
     except Exception as exc:  # log and move on — a queue would retry / dead-letter
         print(f"[nexus] {repo}: job failed: {exc}", flush=True)

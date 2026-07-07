@@ -10,6 +10,7 @@ before-spec = the spec at `base` (default HEAD~1); after-spec = the current work
 
 from __future__ import annotations
 
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -30,8 +31,8 @@ from nexus_refactor.retrieval.qdrant_store import (
 from nexus_refactor.schema.openapi_diff import diff_openapi
 
 
-def _run(cmd: list[str], cwd: Path) -> str:
-    proc = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True)
+def _run(cmd: list[str], cwd: Path, env: dict[str, str] | None = None) -> str:
+    proc = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True, env=env)
     if proc.returncode != 0:
         raise RuntimeError(
             f"`{' '.join(cmd)}` failed: {proc.stderr.strip() or proc.stdout.strip()}"
@@ -46,8 +47,13 @@ def resolve_drift(
     base: str = "HEAD~1",
     branch: str = "nexus/schema-drift-fix",
     open_pr: bool = True,
+    token: str | None = None,
 ) -> dict:
-    """Run the agent on a git repo's drift; return {healed, history, diff, pr_url}."""
+    """Run the agent on a git repo's drift; return {healed, history, diff, pr_url}.
+
+    `token`: a GitHub App installation token (webhook path) so `gh` opens the PR as the scoped bot;
+    None (the CLI path) uses the ambient gh/git credentials.
+    """
     settings = get_settings()
     repo_path = Path(repo).resolve()
     code_path = repo_path / code_dir
@@ -101,6 +107,7 @@ def resolve_drift(
     _run(["git", "commit", "-m", "fix: resolve schema drift in downstream code"], repo_path)
 
     if open_pr:
+        gh_env = {**os.environ, "GH_TOKEN": token} if token else None
         _run(["git", "push", "-u", "origin", branch], repo_path)
         result["pr_url"] = _run(
             [
@@ -113,6 +120,7 @@ def resolve_drift(
                 _pr_body(before, after, result["diff"]),
             ],
             repo_path,
+            env=gh_env,
         )
     _record(repo_name, final, latency_ms, result)
     return result
