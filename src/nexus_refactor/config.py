@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     dense_embed_model: str = "BAAI/bge-small-en-v1.5"
     sparse_embed_model: str = "Qdrant/bm25"
 
+    # --- GitHub App identity (webhook path acts as a scoped bot; see github_app.py) ---
+    github_app_id: str = os.environ.get("GITHUB_APP_ID", "")
+    github_app_private_key: str = os.environ.get("GITHUB_APP_PRIVATE_KEY", "")
+
     # --- Agent termination gate (Phase 1a) ---
     max_iterations: int = 4
     token_budget: int = 200_000

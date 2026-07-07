@@ -28,6 +28,7 @@ dependencies = [
     # --- Service (Phase 2: the webhook deployment surface) ---
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
+    "pyjwt[crypto]>=2.13.0",
 ]
 
 [project.optional-dependencies]
