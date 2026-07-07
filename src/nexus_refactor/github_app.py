@@ -12,6 +12,7 @@ The App is created once and installed per account/repo — see the onboarding do
 from __future__ import annotations
 
 import time
+from pathlib import Path
 
 import httpx
 import jwt
@@ -22,6 +23,17 @@ _API = "https://api.github.com"
 _HEADERS = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
 
 
+def _private_key() -> str:
+    """The App's PEM private key — from GITHUB_APP_PRIVATE_KEY (contents, e.g. a Fly secret) or,
+    for local dev, GITHUB_APP_PRIVATE_KEY_PATH (a path to the .pem)."""
+    s = get_settings()
+    if s.github_app_private_key:
+        return s.github_app_private_key
+    if s.github_app_private_key_path:
+        return Path(s.github_app_private_key_path).read_text()
+    raise RuntimeError("GitHub App private key not configured (GITHUB_APP_PRIVATE_KEY or _PATH)")
+
+
 def _app_jwt() -> str:
     """A short-lived (<=10 min) JWT proving we are the App, signed with its private key (RS256).
 
@@ -30,7 +42,7 @@ def _app_jwt() -> str:
     s = get_settings()
     now = int(time.time())
     payload = {"iss": s.github_app_id, "iat": now - 60, "exp": now + 9 * 60}
-    return jwt.encode(payload, s.github_app_private_key, algorithm="RS256")
+    return jwt.encode(payload, _private_key(), algorithm="RS256")
 
 
 def installation_token(installation_id: int) -> str:

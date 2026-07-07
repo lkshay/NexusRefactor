@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     # --- GitHub App identity (webhook path acts as a scoped bot; see github_app.py) ---
     github_app_id: str = os.environ.get("GITHUB_APP_ID", "")
     github_app_private_key: str = os.environ.get("GITHUB_APP_PRIVATE_KEY", "")
+    github_app_private_key_path: str = os.environ.get("GITHUB_APP_PRIVATE_KEY_PATH", "")
 
     # --- Agent termination gate (Phase 1a) ---
     max_iterations: int = 4
