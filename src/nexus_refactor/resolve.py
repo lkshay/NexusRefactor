@@ -104,7 +104,20 @@ def resolve_drift(
 
     result["diff"] = _run(["git", "diff"], repo_path)
     _run(["git", "add", "-A"], repo_path)
-    _run(["git", "commit", "-m", "fix: resolve schema drift in downstream code"], repo_path)
+    # A fresh container has no git identity, so set one for the commit (else `git commit` errors).
+    _run(
+        [
+            "git",
+            "-c",
+            "user.email=nexusrefactor[bot]@users.noreply.github.com",
+            "-c",
+            "user.name=nexusrefactor[bot]",
+            "commit",
+            "-m",
+            "fix: resolve schema drift in downstream code",
+        ],
+        repo_path,
+    )
 
     if open_pr:
         gh_env = {**os.environ, "GH_TOKEN": token} if token else None
