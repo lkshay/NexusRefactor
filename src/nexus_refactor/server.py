@@ -24,10 +24,16 @@ from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Request
 
+from nexus_refactor.config import get_settings, setup_tracing
 from nexus_refactor.metrics_store import summarize
 from nexus_refactor.resolve import resolve_drift
 
 app = FastAPI(title="NexusRefactor webhook")
+
+# Turn on LangSmith tracing for webhook-triggered heals too. In the Fly container the LANGSMITH_*
+# vars arrive as real env (fly.toml [env] + a secret); this also promotes them from .env for a
+# local `uvicorn` run, and is a no-op when tracing is disabled.
+setup_tracing(get_settings())
 
 _SECRET = os.environ.get("NEXUS_WEBHOOK_SECRET", "")
 _SPEC = os.environ.get("NEXUS_SPEC", "openapi.yaml")

@@ -17,7 +17,9 @@ primary_region = "iad"            # change to a region near you (`fly platform r
   LLM_PROVIDER = "deepseek"
   NEXUS_SPEC = "openapi.yaml"
   NEXUS_CODE_DIR = "service"
-  # QDRANT_URL / QDRANT_API_KEY come from secrets (Qdrant Cloud or a second Fly app).
+  LANGSMITH_TRACING = "true"
+  LANGSMITH_PROJECT = "nexus-refactor"
+  # QDRANT_URL / QDRANT_API_KEY / LANGSMITH_API_KEY come from secrets (Qdrant Cloud + LangSmith).
 
 # Secrets (set via `fly secrets set KEY=...`, NEVER in this file):
 #   DEEPSEEK_API_KEY · NEXUS_WEBHOOK_SECRET · GH_TOKEN · QDRANT_URL · QDRANT_API_KEY
