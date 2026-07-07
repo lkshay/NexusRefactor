@@ -21,10 +21,12 @@ WORKDIR /app
 RUN uv venv /opt/venv
 ENV VIRTUAL_ENV=/opt/venv PATH="/opt/venv/bin:$PATH"
 
-# Install the package (only what's needed to run the service).
+# Install the package + the verify toolchain. mypy/pytest are dev deps, but the agent's `verify`
+# node shells out to them at RUNTIME — without them in the image the heal dies with FileNotFoundError
+# (caught in a LangSmith trace: parse→search→refactor ✓, verify ✗). They are runtime deps here.
 COPY pyproject.toml README.md ./
 COPY src ./src
-RUN uv pip install .
+RUN uv pip install . mypy pytest
 
 # QDRANT_URL comes from the runtime env — compose sets `qdrant:6333`, Fly sets the cloud URL as a
 # secret. Left unset here so it isn't baked to a compose-only hostname (config default: localhost).
