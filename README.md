@@ -61,10 +61,19 @@ benchmark table from the original spec was deleted — see [DECISIONS.md](docs/D
 
 Containerized and **deployed on Fly.io** (scale-to-zero) against managed **Qdrant Cloud**, secrets
 injected at runtime. Two front doors, one core: a CLI and an **HMAC-verified FastAPI webhook** (push
-→ background job → PR). Observed two ways — **LangSmith** traces each run (nodes + the LLM's exact
-prompt/completion — *why did it do that?*); the **metrics store** tracks KPIs (heal rate, latency,
-cost — *is the fleet any good?*). *(Acts via a scoped token today; a least-privilege **GitHub App**
-identity is next.)*
+→ background job → PR). A **GitHub App** gives it a scoped bot identity — PRs come from
+`nexusrefactor[bot]` via short-lived, least-privilege installation tokens.
+
+Observed two ways — **LangSmith** traces every run (the *why*), and a **metrics store** (`/metrics`)
+tracks the KPIs (heal rate, latency, cost — the *how good*):
+
+<p align="center"><img src="docs/img/langsmith-heal.png" width="820" alt="A cloud heal traced in LangSmith"></p>
+
+<p align="center"><em>Every heal is a trace — <code>parse → search → refactor → verify</code> — and the <code>ChatOpenAI</code> span shows the exact prompt and the model's patch.</em></p>
+
+<p align="center"><img src="docs/img/langsmith-verify-error.png" width="820" alt="LangSmith pinpointing a failed verify node"></p>
+
+<p align="center"><em>When a deploy misbehaves the trace pinpoints it — here <code>verify</code> went red with a <code>FileNotFoundError</code> (the container was missing mypy/pytest), caught straight from the trace, no shell needed.</em></p>
 
 ## Stack
 
@@ -80,8 +89,8 @@ identity is next.)*
 
 ## Status
 
-- **Live & measured:** the heal loop, hybrid retrieval, offline + online eval, deploy on Fly.io, LangSmith tracing.
-- **Next:** GitHub App identity · PR-acceptance polling + a metrics dashboard · a larger, harder eval set.
+- **Live & measured:** the heal loop, hybrid retrieval, offline + online eval, deploy on Fly.io, **GitHub App** (bot-authored PRs), LangSmith tracing.
+- **Next:** unique fix-branch per run · PR-acceptance polling + a metrics dashboard · a larger, harder eval set.
 - **Further out (GPU-gated, measured-only):** a fine-tuned served model + an adaptive local/frontier router.
 
 ## Run it
